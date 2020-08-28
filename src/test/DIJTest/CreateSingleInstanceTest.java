@@ -1,4 +1,4 @@
-package test;
+package DIJTest;
 
 import DIJ.DIJContainer;
 import org.junit.Test;

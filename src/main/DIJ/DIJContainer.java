@@ -25,8 +25,15 @@ public class DIJContainer {
     }
 
     public <T extends Object> T getInstanceOf(Class clazz) {
-        if (overrideObjects.containsKey(clazz))
-            return (T) overrideObjects.get(clazz);
+        if (overrideObjects.containsKey(clazz)) {
+            T overrideInstance = (T) overrideObjects.get(clazz);
+
+            if (overrideInstance instanceof LazyOverride) {
+                return (T) ((LazyOverride) overrideInstance).getInstance();
+            }
+
+            return overrideInstance;
+        }
 
         if (singleInstances.containsKey(clazz))
             return (T) singleInstances.get(clazz);
