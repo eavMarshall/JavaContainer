@@ -7,49 +7,94 @@ import java.util.HashMap;
 import java.util.List;
 
 public class DIJContainer {
+    private HashMap<Class, Object> overrideObjects = new HashMap<>();
     private HashMap<Class, Object> singleInstances = new HashMap<>();
 
-    public <T extends Object> T getInstanceOf(Class clazz) {
-        if (singleInstances.containsKey(clazz)) {
-            return (T) singleInstances.get(clazz);
+    public DIJContainer() {}
+    private DIJContainer(HashMap<Class, Object> overrideObjects) {
+        this.overrideObjects = overrideObjects;
+    }
+
+    public DIJContainer addOverrideRule(Class clazz, Object replacementObject) {
+        HashMap<Class, Object> newOverrideRules = new HashMap<>();
+        for (Class key : overrideObjects.keySet()) {
+            newOverrideRules.put(key, overrideObjects.get(key));
         }
+        newOverrideRules.put(clazz, replacementObject);
+        return new DIJContainer(newOverrideRules);
+    }
+
+    public <T extends Object> T getInstanceOf(Class clazz) {
+        if (overrideObjects.containsKey(clazz))
+            return (T) overrideObjects.get(clazz);
+
+        if (singleInstances.containsKey(clazz))
+            return (T) singleInstances.get(clazz);
+
         Object instance = null;
         try {
-            Constructor[] constructors = clazz.getConstructors();
-            if (constructors.length > 1)
-                throw new RuntimeException("Unsupported type:" + clazz.toString() + " this container only supports classes with 1 constructor. Actual constructor count: " + constructors.length);
-
-            Constructor constructor = constructors[0];
-            ArrayList<Object> params = new ArrayList<Object>();
-            Class<?>[] paramTypes = constructor.getParameterTypes();
-            for (Class<?> paramType : paramTypes) {
-                if (paramType.isAssignableFrom(this.getClass())) {
-                    params.add(this);
-                    continue;
-                }
-                params.add(getInstanceOf(paramType));
-            }
+            Constructor constructor = getConstructor(clazz);
+            ArrayList<Object> params = getParamInstances(constructor);
             instance = createInstance(constructor, params);
-            if (instance instanceof InitialiseObject) {
-                ((InitialiseObject) instance).initialise();
-            }
 
-            if (instance instanceof SingleInstances) {
+            if (instance instanceof InitialiseObject)
+                ((InitialiseObject) instance).initialise();
+            if (instance instanceof SingleInstances)
                 singleInstances.put(clazz, instance);
-            }
         } catch (Exception e) {
-            if (e instanceof NoSuchMethodException) {
+            if (e instanceof NoSuchMethodException)
                 throw new RuntimeException("Unsupported type:" + clazz.toString() + " NoSuchMethodException");
-            }
-            if (e instanceof InvocationTargetException) {
+            if (e instanceof InvocationTargetException)
                 throw new RuntimeException("error creating object, message: " + e.getCause());
-            }
-            //I'm not sure if it's possible to even get to this point
+
             throw new RuntimeException("Unexpected error, message: " + e.getMessage());
         }
         return (T) instance;
     }
 
+    private Constructor getConstructor(Class clazz) {
+        Constructor[] constructors = clazz.getConstructors();
+        if (constructors.length > 1)
+            throw new RuntimeException("Unsupported type:" + clazz.toString() + " this container only supports classes with 1 constructor. Actual constructor count: " + constructors.length);
+
+        return constructors[0];
+    }
+
+    private ArrayList<Object> getParamInstances(Constructor constructor) {
+        ArrayList<Object> params = new ArrayList<Object>();
+        Class<?>[] paramTypes = constructor.getParameterTypes();
+        for (Class<?> paramType : paramTypes) {
+            if (paramType.isAssignableFrom(this.getClass())) {
+                params.add(this);
+                continue;
+            }
+            params.add(getInstanceOf(paramType));
+        }
+        return params;
+    }
+
+    /*
+    this is dumb but I don't think there's any other way, generated with:
+
+    int lines = 40;
+    System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+    System.out.println("case 0: return c0(constructor);");
+    for(int i = 1; i <= lines; i++) {
+        System.out.println("case "+i+": return c"+i+"(constructor, params);");
+    }
+    System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+    System.out.println("private Object c0(Constructor c) throws Exception { return c.newInstance(); }");
+    for(int i = 1; i <= lines; i++) {
+        System.out.print("private Object c"+i+"(Constructor c, List p) throws Exception { return c.newInstance(");
+        for(int j = 0; j < i; j++) {
+            String prefix = ", ";
+            if (j == 0) prefix = "";
+            System.out.print(prefix + "p.get("+j+")");
+        }
+        System.out.println("); }");
+    }
+    System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+ */
     private Object createInstance(Constructor constructor, ArrayList<Object> params) {
         try {
             switch (params.size()) {
@@ -101,28 +146,6 @@ public class DIJContainer {
         }
     }
 
-    /*
-        this is dumb but I don't think there's any other way, generated with:
-
-        int lines = 40;
-        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        System.out.println("case 0: return c0(constructor);");
-        for(int i = 1; i <= lines; i++) {
-            System.out.println("case "+i+": return c"+i+"(constructor, params);");
-        }
-        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        System.out.println("private Object c0(Constructor c) throws Exception { return c.newInstance(); }");
-        for(int i = 1; i <= lines; i++) {
-            System.out.print("private Object c"+i+"(Constructor c, List p) throws Exception { return c.newInstance(");
-            for(int j = 0; j < i; j++) {
-                String prefix = ", ";
-                if (j == 0) prefix = "";
-                System.out.print(prefix + "p.get("+j+")");
-            }
-            System.out.println("); }");
-        }
-        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-     */
     private Object c0(Constructor c) throws Exception { return c.newInstance(); }
     private Object c1(Constructor c, List p) throws Exception { return c.newInstance(p.get(0)); }
     private Object c2(Constructor c, List p) throws Exception { return c.newInstance(p.get(0), p.get(1)); }
