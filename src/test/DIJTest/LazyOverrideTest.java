@@ -2,9 +2,9 @@ package DIJTest;
 
 import DIJ.DIJContainer;
 import DIJ.LazyOverride;
+import DIJTest.testClasses.NoConstructor;
+import DIJTest.testClasses.OneConstructor;
 import org.junit.Test;
-import test.testClasses.NoConstructor;
-import test.testClasses.OneConstructor;
 
 import static org.junit.Assert.*;
 
@@ -14,7 +14,7 @@ public class LazyOverrideTest {
     public void testOverride() {
         DIJContainer container = new DIJContainer();
         hasCreateInstance = false;
-        DIJContainer overrideContainer = container.addOverrideRule(OneConstructor.class, new LazyOverride<NoConstructor>() {
+        DIJContainer overrideContainer = container.addOverrideRule(OneConstructor.class, new LazyOverride() {
             @Override
             public NoConstructor getInstance() {
                 hasCreateInstance = true;

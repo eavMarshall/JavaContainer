@@ -1,4 +1,4 @@
-package test.testClasses;
+package DIJTest.testClasses;
 
 public class NoConstructor {
 }

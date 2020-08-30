@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 
 public class DIJContainer {
-    private HashMap<Class, Object> overrideObjects = new HashMap<>();
-    private HashMap<Class, Object> singleInstances = new HashMap<>();
+    private HashMap<Class, Object> overrideObjects = new HashMap<Class, Object>();
+    private HashMap<Class, Object> singleInstances = new HashMap<Class, Object>();
 
     public DIJContainer() {}
     private DIJContainer(HashMap<Class, Object> overrideObjects) {
@@ -16,7 +16,7 @@ public class DIJContainer {
     }
 
     public DIJContainer addOverrideRule(Class clazz, Object replacementObject) {
-        HashMap<Class, Object> newOverrideRules = new HashMap<>();
+        HashMap<Class, Object> newOverrideRules = new HashMap<Class, Object>();
         for (Class key : overrideObjects.keySet()) {
             newOverrideRules.put(key, overrideObjects.get(key));
         }
@@ -41,8 +41,8 @@ public class DIJContainer {
         Object instance = null;
         try {
             Constructor constructor = getConstructor(clazz);
-            ArrayList<Object> params = getParamInstances(constructor);
-            instance = createInstance(constructor, params);
+            constructor = constructor == null ? clazz.getConstructor() : constructor;
+            instance = createInstance(constructor, getParamInstances(constructor));
 
             if (instance instanceof InitialiseObject)
                 ((InitialiseObject) instance).initialise();
@@ -61,10 +61,17 @@ public class DIJContainer {
 
     private Constructor getConstructor(Class clazz) {
         Constructor[] constructors = clazz.getConstructors();
-        if (constructors.length > 1)
-            throw new RuntimeException("Unsupported type:" + clazz.toString() + " this container only supports classes with 1 constructor. Actual constructor count: " + constructors.length);
+        if (constructors.length > 1) {
+            for(Constructor c: constructors) {
+                if (c.getParameterTypes().length == 0) {
+                    return c;
+                }
+            }
+            throw new RuntimeException("Unsupported type:" + clazz.toString()
+                + " this container only supports classes with 1 constructor. Actual constructor count: " + constructors.length);
+        }
 
-        return constructors[0];
+        return constructors.length == 0 ? null : constructors[0];
     }
 
     private ArrayList<Object> getParamInstances(Constructor constructor) {
@@ -149,6 +156,8 @@ public class DIJContainer {
             }
             throw new RuntimeException("Too many arguments");
         } catch (Exception e) {
+            if (e instanceof InvocationTargetException)
+                throw new RuntimeException("error creating object, message: " + e.getCause());
             throw new RuntimeException(e.getMessage());
         }
     }

@@ -1,10 +1,9 @@
 package DIJTest;
 
 import DIJ.DIJContainer;
+import DIJTest.testClasses.NoConstructor;
+import DIJTest.testClasses.OneConstructor;
 import org.junit.Test;
-import test.testClasses.NoConstructor;
-import test.testClasses.OneConstructor;
-
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 

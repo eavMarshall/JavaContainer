@@ -1,13 +1,13 @@
 package DIJTest;
 
 import DIJ.DIJContainer;
+import DIJTest.testClasses.NoConstructor;
+import DIJTest.testClasses.OneConstructor;
+import DIJTest.testClasses.TowAndSelfConstructor;
+import DIJTest.testClasses.TwoConstructor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import test.testClasses.NoConstructor;
-import test.testClasses.OneConstructor;
-import test.testClasses.TowAndSelfConstructor;
-import test.testClasses.TwoConstructor;
 
 import java.util.Arrays;
 import java.util.Collection;
