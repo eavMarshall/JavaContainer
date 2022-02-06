@@ -1,7 +1,5 @@
 package DIJ;
 
-import DIJ.buider.InstanceBuilder;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -10,7 +8,6 @@ import java.util.HashMap;
 public class DIJContainer {
     private HashMap<Class, Object> overrideObjects = new HashMap<Class, Object>();
     private HashMap<Class, Object> singleInstances = new HashMap<Class, Object>();
-    private InstanceBuilder instanceBuilder = new InstanceBuilder();
 
     public DIJContainer() {
     }
@@ -51,7 +48,7 @@ public class DIJContainer {
         try {
             Constructor constructor = getConstructor(clazz);
             constructor = constructor == null ? clazz.getConstructor() : constructor;
-            instance = instanceBuilder.createInstance(constructor, getParamInstances(constructor));
+            instance = createInstance(constructor, getParamInstances(constructor));
 
             if (instance instanceof InitialiseObject)
                 ((InitialiseObject) instance).initialise();
@@ -66,6 +63,16 @@ public class DIJContainer {
             throw new RuntimeException("Unexpected error, message: " + e.getMessage());
         }
         return (T) instance;
+    }
+
+    private Object createInstance(Constructor constructor, ArrayList<Object> params) {
+        try {
+            return constructor.newInstance(params.toArray());
+        } catch (Exception e) {
+            if (e instanceof InvocationTargetException)
+                throw new RuntimeException("error creating object, message: " + e.getCause());
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     private Constructor getConstructor(Class clazz) {
