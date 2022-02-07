@@ -1,7 +1,7 @@
 package DIJ;
 
 /**
- * Anything implementing this class will have the initialise function called after being created
+ * After creating an InitialiseObject, the container will automatically call the initialise function
  */
 public interface InitialiseObject {
     void initialise();

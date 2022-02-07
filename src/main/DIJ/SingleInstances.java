@@ -1,7 +1,7 @@
 package DIJ;
 
 /**
- * Empty interface to tag classes that must have a single instance per container
+ * SingleInstances instances are kept and returned for the lifetime of the container
  */
 public interface SingleInstances {
 }

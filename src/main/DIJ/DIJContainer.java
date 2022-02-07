@@ -54,12 +54,11 @@ public class DIJContainer {
                 ((InitialiseObject) instance).initialise();
             if (instance instanceof SingleInstances)
                 singleInstances.put(clazz, instance);
-        } catch (Exception e) {
-            if (e instanceof NoSuchMethodException)
-                throw new RuntimeException("Unsupported type:" + clazz.toString() + " NoSuchMethodException");
-            if (e instanceof InvocationTargetException)
-                throw new RuntimeException("error creating object, message: " + e.getCause());
-
+        }
+        catch (NoSuchMethodException e) {
+            throw new RuntimeException("Unsupported type:" + clazz.toString() + ", " + e.getMessage());
+        }
+        catch (Exception e) {
             throw new RuntimeException("Unexpected error, message: " + e.getMessage());
         }
         return (T) instance;
@@ -84,7 +83,8 @@ public class DIJContainer {
                 }
             }
             throw new RuntimeException("Unsupported type:" + clazz.toString()
-                    + " this container only supports classes with 1 constructor. Actual constructor count: " + constructors.length);
+                    + " this container only supports classes with 1 public constructor. "
+                    + "Actual constructor count: " + constructors.length);
         }
 
         return constructors.length == 0 ? null : constructors[0];
