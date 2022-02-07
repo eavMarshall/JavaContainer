@@ -1,7 +1,7 @@
 # JavaContainer
 ## _A super simple dependency injection container for java_
 
-This is a test to get a dependency injection container for java 8
+Autowiring di container for java 8
 
 ## Current feature set
 - Immutable
