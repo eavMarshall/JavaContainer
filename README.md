@@ -1,7 +1,7 @@
 # DIJContainer
 ## _A super simple dependency injection container for java 8_
 
-DI Container is a autowiring container, with the ability to use data providers for lazy loading. No XML configuration, no annotations and no extra build steps
+DIJContainer is a autowiring container, with the ability to use data providers for lazy loading. No XML configuration, no annotations and no extra build steps
 
 ## Features
 - Immutable
@@ -9,7 +9,7 @@ DI Container is a autowiring container, with the ability to use data providers f
 - Overridable configuration for testing
 - Data providers for lazy loading and global instances
 - Configuration free production code
--
+
 ## How to use
 Just call the getInstanceOf at the root of your application. All dependencies will be injected.
 ```java
