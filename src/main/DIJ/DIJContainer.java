@@ -1,5 +1,7 @@
 package DIJ;
 
+import DIJ.exceptions.UnsupportedType;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -8,12 +10,24 @@ import java.util.HashMap;
 public class DIJContainer {
     private HashMap<Class, Object> overrideObjects = new HashMap<Class, Object>();
     private HashMap<Class, Object> singleInstances = new HashMap<Class, Object>();
+    private HashMap<Class, Class> classOverrides = new HashMap<Class, Class>();
 
     public DIJContainer() {
     }
 
     private DIJContainer(HashMap<Class, Object> overrideObjects) {
         this.overrideObjects = overrideObjects;
+    }
+
+    public void addInterfaceConfig(HashMap<Class, Class> interfaceMap) {
+        for (Class interfaceToInject : interfaceMap.keySet()) {
+            Class classToInject = interfaceMap.get(interfaceToInject);
+            if (interfaceToInject == null || classToInject == null || !interfaceToInject.isInterface()) {
+                throw new UnsupportedType("Override only support interfaces. " + interfaceToInject + " is not an interface");
+            }
+
+            classOverrides.put(interfaceToInject, classToInject);
+        }
     }
 
     /**
@@ -31,18 +45,14 @@ public class DIJContainer {
         return new DIJContainer(newOverrideRules);
     }
 
-    public <T extends Object> T getInstanceOf(Class clazz) {
-        if (overrideObjects.containsKey(clazz)) {
-            T overrideInstance = (T) overrideObjects.get(clazz);
+    public <T extends Object> T getInstanceOf(Class<T> inputClass) {
+        Class<T> clazz = inputClass;
+        if (overrideObjects.containsKey(clazz)) return getOverrideObject(clazz);
+        if (singleInstances.containsKey(clazz)) return (T) singleInstances.get(clazz);
 
-            if (overrideInstance instanceof LazyOverride)
-                return (T) ((LazyOverride) overrideInstance).getInstance();
-
-            return overrideInstance;
+        if (classOverrides.containsKey(clazz)) {
+            clazz = classOverrides.get(clazz);
         }
-
-        if (singleInstances.containsKey(clazz))
-            return (T) singleInstances.get(clazz);
 
         Object instance;
         try {
@@ -56,12 +66,21 @@ public class DIJContainer {
                 singleInstances.put(clazz, instance);
         }
         catch (NoSuchMethodException e) {
-            throw new RuntimeException("Unsupported type:" + clazz.toString() + ", " + e.getMessage());
+            throw new UnsupportedType("Unsupported type:" + clazz.toString() + ", " + e.getMessage());
         }
         catch (Exception e) {
-            throw new RuntimeException("Unexpected error, message: " + e.getMessage());
+            throw new UnsupportedType("Unexpected error, message: " + e.getMessage());
         }
         return (T) instance;
+    }
+
+    private <T extends Object> T getOverrideObject(Class<T> clazz) {
+        T overrideInstance = (T) overrideObjects.get(clazz);
+
+        if (overrideInstance instanceof LazyOverride)
+            return (T) ((LazyOverride) overrideInstance).getInstance();
+
+        return overrideInstance;
     }
 
     private Object createInstance(Constructor constructor, ArrayList<Object> params) {
@@ -82,7 +101,7 @@ public class DIJContainer {
                     return c;
                 }
             }
-            throw new RuntimeException("Unsupported type:" + clazz.toString()
+            throw new UnsupportedType("Unsupported type:" + clazz.toString()
                     + " this container only supports classes with 1 public constructor. "
                     + "Actual constructor count: " + constructors.length);
         }
